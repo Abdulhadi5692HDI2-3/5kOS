@@ -1,0 +1,6 @@
+[submodule "gnu-efi"]
+	path = gnu-efi
+	url = https://github.com/Absurdponcho/gnu-efi
+[submodule "OVMFbin"]
+	path = OVMFbin
+	url = https://github.com/Absurdponcho/OVMFbin
