@@ -38,12 +38,14 @@
 	$(OBJCOPY) -j .text -j .sdata -j .data -j .dynamic -j .dynsym -j .rel \
 		    -j .rela -j .rel.* -j .rela.* -j .rel* -j .rela* \
 		    -j .reloc $(FORMAT) $*.so $@
+	mv $@ ../x86_64/bootloader
 
 %.efi.debug: %.so
 	$(OBJCOPY) -j .debug_info -j .debug_abbrev -j .debug_aranges \
 		-j .debug_line -j .debug_str -j .debug_ranges \
 		-j .note.gnu.build-id \
 		$(FORMAT) $*.so $@
+	mv $@ ../x86_64/bootloader
 
 %.so: %.o
 	$(LD) $(LDFLAGS) $^ -o $@ $(LOADLIBES)

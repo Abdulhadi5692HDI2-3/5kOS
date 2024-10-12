@@ -45,14 +45,14 @@ TOPDIR = $(SRCDIR)/..
 CDIR=$(TOPDIR)/..
 LINUX_HEADERS	= /usr/src/sys/build
 CPPFLAGS	+= -D__KERNEL__ -I$(LINUX_HEADERS)/include
-CRTOBJS		= ../gnuefi/crt0-efi-$(ARCH).o
+CRTOBJS		= ../x86_64/gnuefi/crt0-efi-$(ARCH).o
 
 LDSCRIPT	= $(TOPDIR)/gnuefi/elf_$(ARCH)_efi.lds
 ifneq (,$(findstring FreeBSD,$(OS)))
 LDSCRIPT	= $(TOPDIR)/gnuefi/elf_$(ARCH)_fbsd_efi.lds
 endif
 
-LDFLAGS		+= -shared -Bsymbolic -L../lib -L../gnuefi -z noexecstack $(CRTOBJS)
+LDFLAGS		+= -shared -Bsymbolic -L../x86_64/lib -L../x86_64/gnuefi -z noexecstack $(CRTOBJS)
 
 LOADLIBES	+= -lefi -lgnuefi
 LOADLIBES	+= $(LIBGCC)
@@ -86,7 +86,7 @@ CFLAGS += -Wno-error=unused-parameter -Wno-error=unused-variable
 all:	$(TARGETS)
 
 clean:
-	rm -f $(TARGETS) *~ *.o *.so
+	rm -f ../x86_64/bootloader/$(TARGETS) *~ *.o *.so
 
 .PHONY: install
 
