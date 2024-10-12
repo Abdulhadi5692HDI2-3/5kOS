@@ -1,5 +1,6 @@
 #include "EarlyDisplay.h"
 
+using namespace NSP_EarlyDisplay;
 void EarlyDisplay::Initalize(Framebuffer* buf, PSF1_FONT* font) {
     g_earlyfont = font;
     g_framebuffer = buf;
