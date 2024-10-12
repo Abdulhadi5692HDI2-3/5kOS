@@ -9,6 +9,7 @@ typedef struct {
 
 Framebuffer* g_framebuffer;
 PSF1_FONT* g_earlyfont;
+Point g_curpos;
 // draw a line
 // borrowed from the bootloader
 void TestFramebufferPixels(Framebuffer* buf) {
@@ -31,13 +32,28 @@ void KeFrameBufferPutChar(UINT color, char c, UINT xoff, UINT yoff) {
         fontPtr++;
     }
 }
+
+void KePrint(UINT color, char* string) {
+    char* chr = string;
+    while (*chr != 0) {
+        if (*chr == '\n') {
+            g_curpos.y += 16;
+            g_curpos.x = 0;
+        }
+        KeFrameBufferPutChar(color, *chr, g_curpos.x, g_curpos.y);
+        g_curpos.x+=8;
+        if (g_curpos.x + 8 > g_framebuffer->Width) {
+            g_curpos.x = 0;
+            g_curpos.y += 16;
+        }
+        chr++;
+    }
+}
 void KeStartup(BootParams LoaderParams) {
     g_framebuffer = LoaderParams.bootframebuffer;
     g_earlyfont = LoaderParams.bootfont;
-    KeFrameBufferPutChar(RGB(255, 0, 0), 'R', 500, 500);
-    KeFrameBufferPutChar(RGB(0, 255, 0), 'G', 510, 500);
-    KeFrameBufferPutChar(RGB(0, 0, 255), 'B', 520, 500);
 }
 void _start(BootParams BootParameters) {
     KeStartup(BootParameters);
+    KePrint(RGB(255, 255, 255), "HALLO WORLD!\nHI!");
 }
