@@ -11,6 +11,15 @@ EFI_FILE* LoadFile(EFI_FILE* dir, CHAR16* Path, EFI_HANDLE ImageHandle, EFI_SYST
 
 Framebuffer boot;
 
+MemoryMap InitalizeMemoryMapStruct(EFI_MEMORY_DESCRIPTOR* Map, UINTN MapSize, UINTN DescSize) {
+	MemoryMap new = {
+		.Map = Map,
+		.MapSize = MapSize,
+		.MapDescriptorSize = DescSize
+	};
+	return new;
+}
+
 PSF1_FONT* LoadPSF1Font(CHAR16* Path, EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *ST) {
 	EFI_FILE* font = LoadFile(NULL, Path, ImageHandle, ST);
 	if (font == NULL) {Print(L"font==null\n"); return NULL;}
@@ -46,10 +55,11 @@ Framebuffer* InitalizeGOP() {
 	return &boot;
 }
 
-BootParams InitalizeParams(Framebuffer* framebuffer, PSF1_FONT* font) {
+BootParams InitalizeParams(Framebuffer* framebuffer, PSF1_FONT* font, MemoryMap mm) {
 	BootParams new = {
 		.bootframebuffer = framebuffer,
-		.bootfont = font
+		.bootfont = font,
+		.MemMap = mm
 	};
 	return new;
 }
@@ -82,8 +92,22 @@ EFI_FILE* LoadFile(EFI_FILE* dir, CHAR16* Path, EFI_HANDLE ImageHandle, EFI_SYST
 	return LoadedFile;
 }
 
+
 EFI_STATUS ExecuteKernel(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable, BootParams params) {
-	EFI_FILE* Krnl = LoadFile(NULL, L"kernel.elf", ImageHandle, SystemTable);
+
+	return EFI_SUCCESS;
+}
+EFI_STATUS efi_main (EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
+	InitializeLib(ImageHandle, SystemTable);
+	Print(L"IN UEFI BOOT. Stage 1 of loading the system\n");
+	//saved_RT = SystemTable->RuntimeServices;
+	Framebuffer* new = InitalizeGOP();
+	PSF1_FONT* font = LoadPSF1Font(L"SYSTEM\\FONTS\\early.psf", ImageHandle, SystemTable);
+	Print(L"Screen: %dx%d\n", new->Width, new->Height);
+	#ifdef ENABLE_GOP_TEST
+	TestFramebufferPixels(new);
+	#endif
+		EFI_FILE* Krnl = LoadFile(NULL, L"kernel.elf", ImageHandle, SystemTable);
 	if (Krnl == NULL) {
 		Print(L"PANIC: Could not load kernel file successfully!");
 		return EFI_NOT_FOUND;
@@ -128,20 +152,22 @@ EFI_STATUS ExecuteKernel(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable, 
 	Print(L"Kernel loaded into a state where we can now enter the kernel mode!\n");
 	Print(L"Calling into kernel entry!\n");
 	void (*KernelEntry)(BootParams) = ((__attribute__((sysv_abi)) void (*)() ) Header.e_entry);
-	KernelEntry(params);
-	return EFI_SUCCESS;
-}
-EFI_STATUS efi_main (EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
-	InitializeLib(ImageHandle, SystemTable);
-	Print(L"IN UEFI BOOT. Stage 1 of loading the system\n");
-	Framebuffer* new = InitalizeGOP();
-	PSF1_FONT* font = LoadPSF1Font(L"SYSTEM\\FONTS\\early.psf", ImageHandle, SystemTable);
-	Print(L"Screen: %dx%d\n", new->Width, new->Height);
-	#ifdef ENABLE_GOP_TEST
-	TestFramebufferPixels(new);
-	#endif
-	BootParams parameters = InitalizeParams(new, font);
-	EFI_STATUS s = ExecuteKernel(ImageHandle, SystemTable, parameters);
-	Print(L"Status translated to message from executing kernel: %r. Exiting EFI Program.....\n", s);
-	return EFI_SUCCESS;
+	EFI_MEMORY_DESCRIPTOR* Map = NULL;
+	UINTN MapSize, MapKey;
+	UINTN DescriptorSize;
+	UINT32 DescriptorVersion;
+	Print(L"GetMemoryMap1\n");
+	SystemTable->BootServices->GetMemoryMap(&MapSize, Map, &MapKey, &DescriptorSize, &DescriptorVersion);
+	Print(L"AllocatePool\n");
+	SystemTable->BootServices->AllocatePool(EfiLoaderData, MapSize, (void**)&Map);
+	Print(L"GetMemoryMap2\n");	
+	SystemTable->BootServices->GetMemoryMap(&MapSize, Map, &MapKey, &DescriptorSize, &DescriptorVersion);
+	MemoryMap populatemm = InitalizeMemoryMapStruct(Map, MapSize, DescriptorSize);
+	BootParams parameters = InitalizeParams(new, font, populatemm);
+	SystemTable->BootServices->ExitBootServices(ImageHandle, MapKey);
+	//EFI_STATUS s = ExecuteKernel(ImageHandle, SystemTable, parameters);
+	//Print(L"Status translated to message from executing kernel: %r. Exiting EFI Program.....\n", s);
+	KernelEntry(parameters);
+	// we should never ever get here
+	return EFI_ABORTED;
 }

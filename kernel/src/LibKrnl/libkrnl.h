@@ -2,4 +2,5 @@
 
 //namespace krnlstd {
     #include "kstr.h"
+    #include "efimem.h"
 //}

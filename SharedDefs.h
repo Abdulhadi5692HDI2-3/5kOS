@@ -1,9 +1,16 @@
 #pragma once
+#include "gnu-efi/inc/efi.h"
 // Shared definitions between the kernel and the bootloader
 typedef unsigned long long ulonglong;
 typedef ulonglong ULONGLONG;
 typedef unsigned int UINT;
 typedef UINT _uint;
+
+typedef struct u6 {
+	EFI_MEMORY_DESCRIPTOR* Map;
+	ULONGLONG MapSize;
+	ULONGLONG MapDescriptorSize;
+} MemoryMap;
 typedef struct u5 {
 	void* Address;
 	ULONGLONG BufferSize;
@@ -30,4 +37,5 @@ typedef struct u3 {
 typedef struct u2 {
 	Framebuffer* bootframebuffer;
 	PSF1_FONT* bootfont;
+	MemoryMap MemMap;
 } BootParams; // passed to the kernel

@@ -5,10 +5,10 @@ GNUEFI = ../gnu-efi
 OVMFDIR = ../OVMFbin
 LDS = krnl.ld 
 CC = gcc
-
+AS = nasm
 CFLAGS = -ffreestanding -fshort-wchar
-LDFLAGS = -T $(LDS) -shared -Bsymbolic -nostdlib
-
+LDFLAGS = -T $(LDS) -shared -Bsymbolic -nostdlib -z noexecstack
+ASFLAGS = -Xgnu -f elf64
 SRCDIR := src
 OBJDIR := lib
 BUILDDIR = bin
@@ -17,8 +17,10 @@ BOOTEFI := $(GNUEFI)/x86_64/bootloader/main.efi
 rwildcard=$(foreach d,$(wildcard $(1:=/*)),$(call rwildcard,$d,$2) $(filter $(subst *,%,$2),$d))
 
 dtime=$$(date +%s)
-SRC = $(call rwildcard,$(SRCDIR),*.cpp)          
+SRC = $(call rwildcard,$(SRCDIR),*.cpp)
+ASM = $(call rwildcard,$(SRCDIR),*.asm)          
 OBJS = $(patsubst $(SRCDIR)/%.cpp, $(OBJDIR)/%.o, $(SRC))
+OBJS += $(patsubst $(SRCDIR)/%.asm, $(OBJDIR)/%_asm.o, $(ASM))
 DIRS = $(wildcard $(SRCDIR)/*)
 all: start kernel end
 
@@ -32,10 +34,16 @@ end:
 
 kernel: $(OBJS) link
 
+$(OBJDIR)/%_asm.o: $(SRCDIR)/%.asm
+	@ echo [BUILD] Assembling $^ --\> $@
+	@ mkdir -p $(@D)
+	$(AS) $(ASFLAGS) $^ -o $@
+
 $(OBJDIR)/%.o: $(SRCDIR)/%.cpp
 	@ echo [BUILD] Compiling $^ --\> $@
 	@ mkdir -p $(@D)
 	$(CC) $(CFLAGS) -c $^ -o $@
+
 
 link:
 	@ echo [BUILD] Linking object files from $(OBJDIR)/
