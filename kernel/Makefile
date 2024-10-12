@@ -48,13 +48,19 @@ setup:
 
 buildimg:
 	dd if=/dev/zero of=$(BUILDDIR)/$(OSNAME).img bs=512 count=93750
+# download font file
+	curl -OJ https://www.zap.org.au/projects/console-fonts-zap/src/zap-light16.psf
+# continue with making image
 	mformat -i $(BUILDDIR)/$(OSNAME).img ::
+	mmd -i $(BUILDDIR)/$(OSNAME).img ::/SYSTEM
+	mmd -i $(BUILDDIR)/$(OSNAME).img ::/SYSTEM/FONTS
 	mmd -i $(BUILDDIR)/$(OSNAME).img ::/EFI
 	mmd -i $(BUILDDIR)/$(OSNAME).img ::/EFI/BOOT
 	mcopy -i $(BUILDDIR)/$(OSNAME).img $(BOOTEFI) ::/EFI/BOOT
 	mcopy -i $(BUILDDIR)/$(OSNAME).img startup.nsh ::
 	mcopy -i $(BUILDDIR)/$(OSNAME).img $(BUILDDIR)/krnl.elf ::/kernel.elf
-
+	mcopy -i $(BUILDDIR)/$(OSNAME).img zap-light16.psf ::/SYSTEM/FONTS/early.psf
+	rm -rf zap-light16.psf
 run:
 	qemu-system-x86_64 -drive file=$(BUILDDIR)/$(OSNAME).img -m 256M -cpu qemu64 -drive if=pflash,format=raw,unit=0,file="$(OVMFDIR)/OVMF_CODE-pure-efi.fd",readonly=on -drive if=pflash,format=raw,unit=1,file="$(OVMFDIR)/OVMF_VARS-pure-efi.fd" -net none
 

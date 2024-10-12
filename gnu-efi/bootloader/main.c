@@ -3,12 +3,34 @@
 #include <elf.h>
 #include "../../SharedDefs.h"
 
+EFI_FILE* LoadFile(EFI_FILE* dir, CHAR16* Path, EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *ST);
 #define LDR_OK 0
 #define LDR_FAIL 1
 #define LDR_UNIMPLMENTED (-1)
 #define STATUS_ASSERT(stat, prg) if(EFI_ERROR(stat)) {Print(L"Assert failed in %a:%d!\n", __FILE__, __LINE__);prg}
 
 Framebuffer boot;
+
+PSF1_FONT* LoadPSF1Font(CHAR16* Path, EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *ST) {
+	EFI_FILE* font = LoadFile(NULL, Path, ImageHandle, ST);
+	if (font == NULL) {Print(L"font==null\n"); return NULL;}
+	PSF1_HEADER* header;
+	ST->BootServices->AllocatePool(EfiLoaderData, sizeof(PSF1_HEADER), (void**)&header);
+	UINTN size = sizeof(PSF1_HEADER);
+	font->Read(font, &size, (VOID*)header);
+
+	UINTN glyphBufferSize = header->charsize * 256;
+	if (header->mode == 1) glyphBufferSize = header->charsize * 512;
+	void* glyphBuffer;
+	font->SetPosition(font, sizeof(PSF1_HEADER));
+	ST->BootServices->AllocatePool(EfiLoaderData, glyphBufferSize, (VOID**)&glyphBuffer);
+	font->Read(font, &glyphBufferSize, glyphBuffer);
+	PSF1_FONT* finishedFont;
+	ST->BootServices->AllocatePool(EfiLoaderData, sizeof(PSF1_FONT), (void**)&finishedFont);
+	finishedFont->Header = header;
+	finishedFont->GlyphBuffer = glyphBuffer;
+	return finishedFont;
+}
 Framebuffer* InitalizeGOP() {
 	EFI_GUID GOPGuid = gEfiGraphicsOutputProtocolGuid;
 	EFI_GRAPHICS_OUTPUT_PROTOCOL* gop;
@@ -24,9 +46,10 @@ Framebuffer* InitalizeGOP() {
 	return &boot;
 }
 
-BootParams InitalizeParams(Framebuffer* framebuffer) {
+BootParams InitalizeParams(Framebuffer* framebuffer, PSF1_FONT* font) {
 	BootParams new = {
-		.bootframebuffer = framebuffer
+		.bootframebuffer = framebuffer,
+		.bootfont = font
 	};
 	return new;
 }
@@ -112,11 +135,12 @@ EFI_STATUS efi_main (EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
 	InitializeLib(ImageHandle, SystemTable);
 	Print(L"IN UEFI BOOT. Stage 1 of loading the system\n");
 	Framebuffer* new = InitalizeGOP();
+	PSF1_FONT* font = LoadPSF1Font(L"SYSTEM\\FONTS\\early.psf", ImageHandle, SystemTable);
 	Print(L"Screen: %dx%d\n", new->Width, new->Height);
 	#ifdef ENABLE_GOP_TEST
 	TestFramebufferPixels(new);
 	#endif
-	BootParams parameters = InitalizeParams(new);
+	BootParams parameters = InitalizeParams(new, font);
 	EFI_STATUS s = ExecuteKernel(ImageHandle, SystemTable, parameters);
 	Print(L"Status translated to message from executing kernel: %r. Exiting EFI Program.....\n", s);
 	return EFI_SUCCESS;

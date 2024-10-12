@@ -9,7 +9,7 @@ void TestFramebufferPixels(Framebuffer* buf) {
 	}
 }
 void KeStartup(BootParams LoaderParams) {
-    TestFramebufferPixels(LoaderParams.bootframebuffer);
+    
 }
 void _start(BootParams BootParameters) {
     KeStartup(BootParameters);
