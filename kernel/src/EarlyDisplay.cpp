@@ -36,3 +36,8 @@ void EarlyDisplay::Print(UINT color, const char* string) {
         chr++;
     }
 }
+
+void EarlyDisplay::PutPixel(UINT color, UINT x, UINT y) {
+    UINT* pixPtr = (UINT*)g_framebuffer->Address;
+    *(UINT*)(pixPtr + x + (y * g_framebuffer->PixelsPerScanLine)) = color;
+}
