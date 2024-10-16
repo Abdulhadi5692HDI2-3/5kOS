@@ -4,6 +4,8 @@
 
 
 unsigned int g_port = _PORT_COM1;
+
+SerialDevice DefaultSerialDevice;
 void SerialDevice::Initalize() {
     _outb(g_port + 1, 0x00);
     _outb(g_port + 3, 0x80);

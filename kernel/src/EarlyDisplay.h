@@ -16,3 +16,5 @@ namespace NSP_EarlyDisplay {
         void Print(UINT color, const char* string);
     };
 }
+
+extern NSP_EarlyDisplay::EarlyDisplay DisplayInterface;

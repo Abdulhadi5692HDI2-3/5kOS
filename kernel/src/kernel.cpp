@@ -4,13 +4,13 @@
 #include "asm/kasm.h"
 #include "serial/serial.h"
 #include "../../external/printf/printf.h"
+#include "debug.h"
 #define RGB(r, g, b) ((r & 0xff) << 16) + ((g & 0xff) << 8) + (b & 0xff)
 
 using namespace NSP_EarlyDisplay;
-NSP_EarlyDisplay::EarlyDisplay DisplayInterface;
+
 //using namespace krnlstd;
 
-SerialDevice DefaultSerialDevice;
 void _putchar(char character) {
     char array[2] = {character, '\0'};
     DisplayInterface.Print(RGB(255, 255, 255), array);
@@ -40,6 +40,7 @@ void KeStartup(BootParams LoaderParams) {
     COM1.Initalize();
     DefaultSerialDevice = COM1;
     printf("Hello world!\n");
+    KeBugCheck("oh no!");
 }
 extern "C" void _start(BootParams BootParameters) {
     KeStartup(BootParameters);

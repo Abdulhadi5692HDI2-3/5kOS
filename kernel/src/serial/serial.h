@@ -10,3 +10,5 @@ class SerialDevice {
     char ReadChar();
     void WriteChar(char);
 };
+
+extern SerialDevice DefaultSerialDevice;

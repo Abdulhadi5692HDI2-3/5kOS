@@ -7,3 +7,4 @@
 extern "C" void __hcf();
 extern "C" BYTE _inb(unsigned short);
 extern "C" void _outb(unsigned short, BYTE);
+extern "C" void _crash_reboot();
