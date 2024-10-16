@@ -35,8 +35,11 @@ typedef struct u3 {
 	void* GlyphBuffer;
 } PSF1_FONT;
 
+#define BOOTPARAM_MAGIC 0xFACADE
+
 // Bootparams struct
 typedef struct u2 {
+	UINT Magic;
 	Framebuffer* bootframebuffer;
 	PSF1_FONT* bootfont;
 	MemoryMap MemMap;

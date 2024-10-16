@@ -40,9 +40,13 @@ void KeStartup(BootParams LoaderParams) {
     COM1.Initalize();
     DefaultSerialDevice = COM1;
     printf("Hello world!\n");
+    printf("Boot params magic: 0x%X\n", LoaderParams.Magic);
     KeBugCheck("oh no!");
 }
 extern "C" void _start(BootParams BootParameters) {
+    if (BootParameters.Magic != BOOTPARAM_MAGIC) {
+        __hcf();
+    }
     KeStartup(BootParameters);
     // if we ever get here then just halt
     __hcf();

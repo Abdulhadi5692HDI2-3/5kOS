@@ -164,6 +164,7 @@ EFI_STATUS efi_main (EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
 	SystemTable->BootServices->GetMemoryMap(&MapSize, Map, &MapKey, &DescriptorSize, &DescriptorVersion);
 	MemoryMap populatemm = InitalizeMemoryMapStruct(Map, MapSize, DescriptorSize);
 	BootParams parameters = InitalizeParams(new, font, populatemm);
+	parameters.Magic = BOOTPARAM_MAGIC;
 	SystemTable->ConOut->ClearScreen(SystemTable->ConOut);
 	SystemTable->BootServices->ExitBootServices(ImageHandle, MapKey);
 	//EFI_STATUS s = ExecuteKernel(ImageHandle, SystemTable, parameters);
