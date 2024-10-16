@@ -5,6 +5,8 @@ typedef unsigned long long ulonglong;
 typedef ulonglong ULONGLONG;
 typedef unsigned int UINT;
 typedef UINT _uint;
+typedef unsigned long ULONG; // otherwise aka as size_t
+typedef char BYTE; // equivilant to posix's UINT8_T
 
 typedef struct u6 {
 	EFI_MEMORY_DESCRIPTOR* Map;

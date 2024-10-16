@@ -2,11 +2,20 @@
 #include "EarlyDisplay.h"
 #include "LibKrnl/libkrnl.h"
 #include "asm/kasm.h"
-
+#include "serial/serial.h"
+#include "../../external/printf/printf.h"
 #define RGB(r, g, b) ((r & 0xff) << 16) + ((g & 0xff) << 8) + (b & 0xff)
 
 using namespace NSP_EarlyDisplay;
+NSP_EarlyDisplay::EarlyDisplay DisplayInterface;
 //using namespace krnlstd;
+
+SerialDevice DefaultSerialDevice;
+void _putchar(char character) {
+    char array[2] = {character, '\0'};
+    DisplayInterface.Print(RGB(255, 255, 255), array);
+    DefaultSerialDevice.WriteChar(character);
+}
 
 void KePrintMemoryMap(MemoryMap populatemm, NSP_EarlyDisplay::EarlyDisplay Out) {
     ULONGLONG mMapEntries = populatemm.MapSize / populatemm.MapDescriptorSize;
@@ -22,11 +31,15 @@ void KePrintMemoryMap(MemoryMap populatemm, NSP_EarlyDisplay::EarlyDisplay Out) 
     }
 }
 void KeStartup(BootParams LoaderParams) {
-    NSP_EarlyDisplay::EarlyDisplay DisplayInterface;
+
     DisplayInterface.Initalize(LoaderParams.bootframebuffer, LoaderParams.bootfont);
     //DisplayInterface.Print(RGB(255, 255, 255), "ohio\n"); // todo: \n creates this weird  | character
     // /DisplayInterface.Print(RGB(255, 255, 255), ToString(1234));
-    KePrintMemoryMap(LoaderParams.MemMap, DisplayInterface);
+    //KePrintMemoryMap(LoaderParams.MemMap, DisplayInterface);
+    SerialDevice COM1;// this will default to COM1 anyway?
+    COM1.Initalize();
+    DefaultSerialDevice = COM1;
+    printf("Hello world!\n");
 }
 extern "C" void _start(BootParams BootParameters) {
     KeStartup(BootParameters);

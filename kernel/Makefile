@@ -22,7 +22,8 @@ ASM = $(call rwildcard,$(SRCDIR),*.asm)
 OBJS = $(patsubst $(SRCDIR)/%.cpp, $(OBJDIR)/%.o, $(SRC))
 OBJS += $(patsubst $(SRCDIR)/%.asm, $(OBJDIR)/%_asm.o, $(ASM))
 DIRS = $(wildcard $(SRCDIR)/*)
-all: start kernel end
+EXTERNAL1 = $(realpath -f ../external/printf/printf.c)
+all: start external kernel end
 
 start:
 	@ echo [BUILD] Starting build for x86_64
@@ -45,10 +46,14 @@ $(OBJDIR)/%.o: $(SRCDIR)/%.cpp
 	$(CC) $(CFLAGS) -c $^ -o $@
 
 
+external:
+	@ echo [BUILD] Compiling external dependency $(EXTERNAL1)
+	$(CC) $(CFLAGS) -c $(EXTERNAL1) -o $(OBJDIR)/printf.o
+
 link:
 	@ echo [BUILD] Linking object files from $(OBJDIR)/
 	@ echo [BUILD] Using linker file [krnl.ld]
-	$(LD) $(LDFLAGS) -o $(BUILDDIR)/krnl.elf$(OBJS)
+	$(LD) $(LDFLAGS) -o $(BUILDDIR)/krnl.elf$(OBJS) $(OBJDIR)/printf.o
 setup:
 	@mkdir $(BUILDDIR)
 	@mkdir $(SRCDIR)
@@ -70,9 +75,10 @@ buildimg:
 	mcopy -i $(BUILDDIR)/$(OSNAME).img zap-light16.psf ::/SYSTEM/FONTS/early.psf
 	rm -rf zap-light16.psf
 run:
-	qemu-system-x86_64 -drive file=$(BUILDDIR)/$(OSNAME).img -m 256M -cpu qemu64 -drive if=pflash,format=raw,unit=0,file="$(OVMFDIR)/OVMF_CODE-pure-efi.fd",readonly=on -drive if=pflash,format=raw,unit=1,file="$(OVMFDIR)/OVMF_VARS-pure-efi.fd" -net none
+	@ ./run
 
 clean:
-	@ echo [BUILD] Starting clean [cleaning $(OBJDIR)/*]
+	@ echo [BUILD] Starting clean [cleaning $(OBJDIR)/* and debug.log]
 	rm -rf $(OBJDIR)/*
+	rm -rf debug.log
 	@ echo [BUILD] Ended clean

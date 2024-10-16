@@ -12,6 +12,9 @@ void EarlyDisplay::PutChar(UINT color, char c, UINT xoff, UINT yoff) {
     char* fontPtr = (char*)g_earlyfont->GlyphBuffer + (c * g_earlyfont->Header->charsize);
     for (unsigned long y = yoff; y < yoff + 16; y++) {
         for (unsigned long x = xoff; x < xoff + 8; x++) {
+            if (c == (char)10) {
+                continue;
+            }
             if ((*fontPtr & (0b10000000 >> (x - xoff))) > 0) {
                 *(UINT*)(pixPtr + x + (y * g_framebuffer->PixelsPerScanLine)) = color;
             }
@@ -23,7 +26,7 @@ void EarlyDisplay::PutChar(UINT color, char c, UINT xoff, UINT yoff) {
 void EarlyDisplay::Print(UINT color, const char* string) {
     char* chr = (char*)string;
     while (*chr != 0) {
-        if (*chr == '\n') {
+        if (*chr == (char)10) {
             g_curpos.y += 16;
             g_curpos.x = 0;
         }
