@@ -14,6 +14,5 @@ namespace NSP_EarlyDisplay {
         void Initalize(Framebuffer* buf, PSF1_FONT* font);
         void PutChar(UINT color, char c, UINT xoff, UINT yoff);
         void Print(UINT color, const char* string);
-        void PutPixel(UINT color, UINT x, UINT y);
     };
 }
