@@ -5,9 +5,13 @@
 #include "serial/serial.h"
 #include "../../external/printf/printf.h"
 #include "debug.h"
+#include "memory/PFAllocator.h"
 #define RGB(r, g, b) ((r & 0xff) << 16) + ((g & 0xff) << 8) + (b & 0xff)
 
 using namespace NSP_EarlyDisplay;
+
+extern uint64_t _KernelStart;
+extern uint64_t _KernelEnd;
 
 //using namespace krnlstd;
 
@@ -30,18 +34,30 @@ void KePrintMemoryMap(MemoryMap populatemm, NSP_EarlyDisplay::EarlyDisplay Out) 
         Out.Print(RGB(255, 255, 255), " KB");
     }
 }
-void KeStartup(BootParams LoaderParams) {
 
-    DisplayInterface.Initalize(LoaderParams.bootframebuffer, LoaderParams.bootfont);
-    //DisplayInterface.Print(RGB(255, 255, 255), "ohio\n"); // todo: \n creates this weird  | character
-    // /DisplayInterface.Print(RGB(255, 255, 255), ToString(1234));
-    //KePrintMemoryMap(LoaderParams.MemMap, DisplayInterface);
-    SerialDevice COM1;// this will default to COM1 anyway?
+void KeKernelInitalize(BootParams LoaderParams) {
+    SerialDevice COM1;
     COM1.Initalize();
     DefaultSerialDevice = COM1;
+
+    DisplayInterface.Initalize(LoaderParams.bootframebuffer, LoaderParams.bootfont);
+    #ifdef _INIT_DEBUG
+    printf("KeKernelInitalize: Initalized the framebuffer and display. Framebuffer address: 0x%lx\n", LoaderParams.bootframebuffer->Address);
+    #endif
+    PageFrameAllocator PFA;
+    uint64_t KernelSize = (uint64_t)&_KernelEnd - (uint64_t)&_KernelStart;
+    uint64_t KernelPages = (uint64_t)KernelSize / 4096 + 1;
+
+    PFA.ReadEFIMemoryMap(LoaderParams.MemMap.Map, LoaderParams.MemMap.MapSize, LoaderParams.MemMap.MapDescriptorSize);
+    PFA.LockPages(&_KernelStart, KernelPages);
+    #ifdef _INIT_DEBUG
+    printf("KeKernelInitalize: Locked %d pages for the kernel!\n", KernelPages);
+    #endif
+}
+void KeStartup(BootParams LoaderParams) {
+    KeKernelInitalize(LoaderParams);
     printf("Hello world!\n");
     printf("Boot params magic: 0x%X\n", LoaderParams.Magic);
-    KeBugCheck("oh no!");
 }
 extern "C" void _start(BootParams BootParameters) {
     if (BootParameters.Magic != BOOTPARAM_MAGIC) {

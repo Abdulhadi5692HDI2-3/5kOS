@@ -5,6 +5,7 @@
 #include "serial/serial.h"
 #include "LibKrnl/libkrnl.h"
 
+#ifdef _BUGCHECK
 void KeBugCheck(const char* string, ...) {
     va_list va;
     va_start(va, string);
@@ -15,6 +16,7 @@ void KeBugCheck(const char* string, ...) {
     _crash_reboot();
     va_end(va);
 }
+#endif
 
 void KeAssertEx(bool condition, const char* file, int line) {
     if (!condition) {
