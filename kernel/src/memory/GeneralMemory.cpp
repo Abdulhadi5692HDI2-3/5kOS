@@ -13,3 +13,11 @@ uint64_t GetMemorySize(EFI_MEMORY_DESCRIPTOR* Map, uint64_t MapEntries, uint64_t
     return memorySizeBytes;
 
 }
+
+
+void * MemSetZero(void * s, uint64_t n) {
+    unsigned char* ptr = (unsigned char* )s;
+    for (int i = 0; i < n; i++) {
+        *ptr++ = 0;
+    }
+}

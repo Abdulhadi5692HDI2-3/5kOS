@@ -52,8 +52,14 @@ void KeKernelInitalize(BootParams LoaderParams) {
 
     PFA.ReadEFIMemoryMap(LoaderParams.MemMap.Map, LoaderParams.MemMap.MapSize, LoaderParams.MemMap.MapDescriptorSize);
     PFA.LockPages(&_KernelStart, KernelPages);
+    GlobalAllocator = PFA;
     #ifdef _INIT_DEBUG
     printf("KeKernelInitalize: Locked %d pages for the kernel!\n", KernelPages);
+    #endif
+    
+    SetupPaging();
+    #ifdef _INIT_DEBUG
+    printf("KeKernelInitalize: Paging enabled!\n");
     #endif
     
 }
@@ -61,6 +67,7 @@ void KeStartup(BootParams LoaderParams) {
     KeKernelInitalize(LoaderParams);
     printf("Hello world!\n");
     printf("Boot params magic: 0x%X\n", LoaderParams.Magic);
+    printf("testing: %d\n", _argstest(10));
 }
 extern "C" void _start(BootParams BootParameters) {
     if (BootParameters.Magic != BOOTPARAM_MAGIC) {

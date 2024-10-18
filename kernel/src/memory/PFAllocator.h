@@ -22,3 +22,5 @@ class PageFrameAllocator {
     uint64_t GetReservedRAM();
     uint64_t GetTotalRAM();
 };
+
+extern PageFrameAllocator GlobalAllocator;
