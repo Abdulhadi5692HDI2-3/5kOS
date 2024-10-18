@@ -6,7 +6,7 @@ OVMFDIR = ../OVMFbin
 LDS = krnl.ld 
 CC = gcc
 AS = nasm
-CFLAGS = -ffreestanding -fshort-wchar
+CFLAGS = -ffreestanding -fshort-wchar -mno-red-zone
 LDFLAGS = -T $(LDS) -shared -Bsymbolic -nostdlib -z noexecstack
 ASFLAGS = -Xgnu -f elf64
 SRCDIR := src
@@ -23,37 +23,43 @@ OBJS = $(patsubst $(SRCDIR)/%.cpp, $(OBJDIR)/%.o, $(SRC))
 OBJS += $(patsubst $(SRCDIR)/%.asm, $(OBJDIR)/%_asm.o, $(ASM))
 DIRS = $(wildcard $(SRCDIR)/*)
 EXTERNAL1 = $(realpath -f ../external/printf/printf.c)
+
+COLOUR_GREEN=\033[0;32m
+COLOUR_RED=\033[0;31m
+COLOUR_BLUE=\033[0;34m
+COLOUR_END=\033[0m
+
 all: start external kernel end
 
 start:
-	@ echo [BUILD] Starting build for x86_64
-	@ echo [BUILD] Build starting on $$(date --date="@$(dtime)")
+	@ echo "$(COLOUR_GREEN)[BUILD] Starting build for x86_64$(COLOUR_END)"
+	@ echo "$(COLOUR_GREEN)[BUILD] Build starting on $$(date --date="@$(dtime)")$(COLOUR_END)"
 
 end:
-	@ echo [BUILD] Ended build for x86_64
-	@ echo [BUILD] Build completed on $$(date --date="@$$(($$(date +%s)-dtime))")
+	@ echo "$(COLOUR_GREEN)[BUILD] Ended build for x86_64$(COLOUR_END)"
+	@ echo "$(COLOUR_GREEN)[BUILD] Build completed on $$(date --date="@$$(($$(date +%s)-dtime))")$(COLOUR_END)"
 
 kernel: $(OBJS) link
 
 $(OBJDIR)/%_asm.o: $(SRCDIR)/%.asm
-	@ echo [BUILD] Assembling $^ --\> $@
+	@ echo "$(COLOUR_BLUE)[BUILD] Assembling $^ --> $@ $(COLOUR_END)"
 	@ mkdir -p $(@D)
-	$(AS) $(ASFLAGS) $^ -o $@
+	@ $(AS) $(ASFLAGS) $^ -o $@
 
 $(OBJDIR)/%.o: $(SRCDIR)/%.cpp
-	@ echo [BUILD] Compiling $^ --\> $@
+	@ echo "$(COLOUR_BLUE)[BUILD] Compiling $^ --> $@ $(COLOUR_END)"
 	@ mkdir -p $(@D)
-	$(CC) $(CFLAGS) -c $^ -o $@
+	@ $(CC) $(CFLAGS) -c $^ -o $@
 
 
 external:
-	@ echo [BUILD] Compiling external dependency $(EXTERNAL1)
-	$(CC) $(CFLAGS) -c $(EXTERNAL1) -o $(OBJDIR)/printf.o
+	@ echo "$(COLOUR_BLUE)[BUILD] Compiling external dependency $(EXTERNAL1) $(COLOUR_END)"
+	@ $(CC) $(CFLAGS) -c $(EXTERNAL1) -o $(OBJDIR)/printf.o
 
 link:
-	@ echo [BUILD] Linking object files from $(OBJDIR)/
-	@ echo [BUILD] Using linker file [krnl.ld]
-	$(LD) $(LDFLAGS) -o $(BUILDDIR)/krnl.elf$(OBJS) $(OBJDIR)/printf.o
+	@ echo "$(COLOUR_BLUE)[BUILD] Linking object files from $(OBJDIR)/ $(COLOUR_END)"
+	@ echo "$(COLOUR_BLUE)[BUILD] Using linker file [krnl.ld] $(COLOUR_END)"
+	@ $(LD) $(LDFLAGS) -o $(BUILDDIR)/krnl.elf$(OBJS) $(OBJDIR)/printf.o
 setup:
 	@mkdir $(BUILDDIR)
 	@mkdir $(SRCDIR)
@@ -78,7 +84,7 @@ run:
 	@ ./run
 
 clean:
-	@ echo [BUILD] Starting clean [cleaning $(OBJDIR)/* and debug.log]
+	@ echo "$(COLOUR_GREEN)[BUILD] Starting clean [cleaning $(OBJDIR)/* and debug.log] $(COLOUR_END)"
 	rm -rf $(OBJDIR)/*
 	rm -rf debug.log
-	@ echo [BUILD] Ended clean
+	@ echo "$(COLOUR_GREEN)[BUILD] Ended clean $(COLOUR_END)"
