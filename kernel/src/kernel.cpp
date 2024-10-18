@@ -6,6 +6,7 @@
 #include "../../external/printf/printf.h"
 #include "debug.h"
 #include "memory/PFAllocator.h"
+
 #define RGB(r, g, b) ((r & 0xff) << 16) + ((g & 0xff) << 8) + (b & 0xff)
 
 using namespace NSP_EarlyDisplay;
@@ -36,6 +37,7 @@ void KePrintMemoryMap(MemoryMap populatemm, NSP_EarlyDisplay::EarlyDisplay Out) 
 }
 
 void KeKernelInitalize(BootParams LoaderParams) {
+    asm ("cli"); // at this stage we dont need interrupts
     SerialDevice COM1;
     COM1.Initalize();
     DefaultSerialDevice = COM1;
@@ -53,6 +55,7 @@ void KeKernelInitalize(BootParams LoaderParams) {
     #ifdef _INIT_DEBUG
     printf("KeKernelInitalize: Locked %d pages for the kernel!\n", KernelPages);
     #endif
+    
 }
 void KeStartup(BootParams LoaderParams) {
     KeKernelInitalize(LoaderParams);
