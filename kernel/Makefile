@@ -85,6 +85,7 @@ run:
 
 clean:
 	@ echo "$(COLOUR_GREEN)[BUILD] Starting clean [cleaning $(OBJDIR)/* and debug.log] $(COLOUR_END)"
+	@ echo "$(COLOUR_GREEN)[BUILD] Removing: $(COLOUR_RED)$(OBJS)$(COLOUR_END)"
 	rm -rf $(OBJDIR)/*
 	rm -rf debug.log
 	@ echo "$(COLOUR_GREEN)[BUILD] Ended clean $(COLOUR_END)"
