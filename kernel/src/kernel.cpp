@@ -57,7 +57,12 @@ void KePrepareInterrupts() {
     KeInterruptRegisterEntry(0xD, (uint64_t)GPFault_Handler, Idtr);
     KeInterruptRegisterEntry(0x8, (uint64_t)DoubleFault_Handler, Idtr);
     KeInterruptRegisterEntry(0x03, (uint64_t)Breakpoint_Handler, Idtr);
-    KeInterruptRegisterEntry(33, (uint64_t)KBD_Handler, Idtr);
+    //KeInterruptRegisterEntry(33, (uint64_t)KBD_Handler, Idtr);
+    IdtEntry* int_kbd = (IdtEntry*)(Idtr.Offset + 0x21 * sizeof(IdtEntry));
+    int_kbd->SetOffset((uint64_t)KBD_Handler);
+    int_kbd->type_attr = IDT_TA_InterruptGate;
+    int_kbd->selector = 0x08;
+
     _lidt(&Idtr);
     RemapPIC();
     #ifdef _INIT_DEBUG
@@ -113,8 +118,6 @@ void KeStartup(BootParams LoaderParams) {
     KeKernelInitalize(LoaderParams);
     printf("Hello world!\n");
     printf("Boot params magic: 0x%X\n", LoaderParams.Magic);    
-    asm ("int3");
-    printf("Hello again!\n");
 }
 extern "C" void _start(BootParams BootParameters) {
     if (BootParameters.Magic != BOOTPARAM_MAGIC) {
