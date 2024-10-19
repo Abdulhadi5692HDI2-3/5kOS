@@ -46,6 +46,10 @@ $(OBJDIR)/%_asm.o: $(SRCDIR)/%.asm
 	@ mkdir -p $(@D)
 	@ $(AS) $(ASFLAGS) $^ -o $@
 
+$(OBJDIR)/interrupt/interrupt.o: $(SRCDIR)/interrupt/interrupt.cpp
+	@ echo "$(COLOUR_BLUE)[BUILD] Compiling interrupt handlers in $^ --> $@ $(COLOUR_END)"
+	@ mkdir -p $(@D)
+	@ $(CC) -mno-red-zone -mgeneral-regs-only -ffreestanding -c $^ -o $@
 $(OBJDIR)/%.o: $(SRCDIR)/%.cpp
 	@ echo "$(COLOUR_BLUE)[BUILD] Compiling $^ --> $@ $(COLOUR_END)"
 	@ mkdir -p $(@D)

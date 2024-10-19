@@ -7,6 +7,11 @@
 #include "debug.h"
 #include "memory/PFAllocator.h"
 #include "memory/GeneralMemory.h"
+#include "gdt/gdt.h"
+#include "interrupt/idt.h"
+#include "interrupt/interrupt.h"
+
+
 #define RGB(r, g, b) ((r & 0xff) << 16) + ((g & 0xff) << 8) + (b & 0xff)
 
 using namespace NSP_EarlyDisplay;
@@ -36,6 +41,24 @@ void KePrintMemoryMap(MemoryMap populatemm, NSP_EarlyDisplay::EarlyDisplay Out) 
     }
 }
 
+_Idtr Idtr;
+
+void KeInterruptRegisterEntry(unsigned int entry, uint64_t handler, _Idtr idtr) {
+    IdtEntry* ientry = (IdtEntry*)(idtr.Offset + entry * sizeof(IdtEntry));
+    ientry->SetOffset(handler);
+    ientry->type_attr = IDT_TA_InterruptGate;
+    ientry->selector = 0x08;
+}
+
+void KePrepareInterrupts() {
+    Idtr.Limit = 0x0FFF;
+    Idtr.Offset = (uint64_t)GlobalAllocator.RequestPage();
+    KeInterruptRegisterEntry(0xE, (uint64_t)PageFault_Handler, Idtr);
+    KeInterruptRegisterEntry(0xD, (uint64_t)GPFault_Handler, Idtr);
+    KeInterruptRegisterEntry(0x8, (uint64_t)DoubleFault_Handler, Idtr);
+    _lidt(&Idtr);
+    _sti();
+}
 void KeKernelInitalize(BootParams LoaderParams) {
     asm ("cli"); // at this stage we dont need interrupts
     SerialDevice COM1;
@@ -46,10 +69,14 @@ void KeKernelInitalize(BootParams LoaderParams) {
     #ifdef _INIT_DEBUG
     printf("KeKernelInitalize: Initalized the framebuffer and display. Framebuffer address: 0x%lx\n", LoaderParams.bootframebuffer->Address);
     #endif
+
+    SetupGDTSegments();
+    #ifdef _INIT_DEBUG
+    printf("KeKernelInitalize: Setup GDT and segmentation. (useless but required)\n");
+    #endif
     PageFrameAllocator PFA;
     uint64_t KernelSize = (uint64_t)&_KernelEnd - (uint64_t)&_KernelStart;
     uint64_t KernelPages = (uint64_t)KernelSize / 4096 + 1;
-
     PFA.ReadEFIMemoryMap(LoaderParams.MemMap.Map, LoaderParams.MemMap.MapSize, LoaderParams.MemMap.MapDescriptorSize);
     PFA.LockPages(&_KernelStart, KernelPages);
     GlobalAllocator = PFA;
@@ -61,6 +88,11 @@ void KeKernelInitalize(BootParams LoaderParams) {
     #ifdef _INIT_DEBUG
     printf("KeKernelInitalize: Paging enabled!\n");
     #endif
+
+    KePrepareInterrupts();
+    #ifdef _INIT_DEBUG
+    printf("KeKernelInitalize: Interrupt descriptor table loaded and interrupt handlers registered!\n");
+    #endif
     // clear screen
     #ifdef _INIT_DEBUG
     printf("KeKernelInitalize: Internal kernel init finished! Clearing framebuffer now....\n");
@@ -71,8 +103,7 @@ void KeKernelInitalize(BootParams LoaderParams) {
 void KeStartup(BootParams LoaderParams) {
     KeKernelInitalize(LoaderParams);
     printf("Hello world!\n");
-    printf("Boot params magic: 0x%X\n", LoaderParams.Magic);
-    printf("testing: %d\n", _argstest(10));
+    printf("Boot params magic: 0x%X\n", LoaderParams.Magic);    
 }
 extern "C" void _start(BootParams BootParameters) {
     if (BootParameters.Magic != BOOTPARAM_MAGIC) {
