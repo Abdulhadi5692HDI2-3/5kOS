@@ -62,15 +62,12 @@ void KePrepareInterrupts() {
     int_kbd->SetOffset((uint64_t)KBD_Handler);
     int_kbd->type_attr = IDT_TA_InterruptGate;
     int_kbd->selector = 0x08;
-
     _lidt(&Idtr);
     RemapPIC();
     #ifdef _INIT_DEBUG
     printf("KePrepareInterrupts: Remapped 8086 PIC!\n");
     #endif
 
-    _outb(0x21,0xfd);
-    _outb(0xa1,0xff);
     _sti();
 }
 void KeKernelInitalize(BootParams LoaderParams) {

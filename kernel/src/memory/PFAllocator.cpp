@@ -29,7 +29,7 @@ void PageFrameAllocator::ReadEFIMemoryMap(EFI_MEMORY_DESCRIPTOR* Map, unsigned l
     TotalMemory = MemorySize;
     uint64_t BitmapSize = MemorySize / 4096 / 8 + 1;
     InitBitmap(BitmapSize, LargestFreeMemorySegment);
-    LockPages(&PageBitmap, PageBitmap.Size / 4096 + 1);
+    LockPages(PageBitmap.Buffer, PageBitmap.Size / 4096 + 1);
 
     for (UINT i = 0; i < MapEntries; ++i) {
         EFI_MEMORY_DESCRIPTOR* Desc = (EFI_MEMORY_DESCRIPTOR*)((uint64_t)Map + (i * MapDescSize));

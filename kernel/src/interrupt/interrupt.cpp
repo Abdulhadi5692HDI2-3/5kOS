@@ -20,8 +20,8 @@ __attribute__((interrupt)) void DoubleFault_Handler(struct interrupt_frame* fram
 }
 // 0x21
 __attribute__((interrupt)) void KBD_Handler(struct interrupt_frame* frame) {
-    printf("key press");
     uint8_t scancode = _inb(0x60);
+    printf("0x%x ", scancode);
     PIC_EndMaster();
 }
 // 0x3
@@ -30,6 +30,7 @@ __attribute__((interrupt)) void Breakpoint_Handler(struct interrupt_frame* frame
     uint8_t wait = DefaultSerialDevice.ReadChar();
     printf("resuming code execution...\n");
 }
+
 
 void PIC_EndMaster() {
     _outb(PIC1_COMMAND, PIC_EOI);
