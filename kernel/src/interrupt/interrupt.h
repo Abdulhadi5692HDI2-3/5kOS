@@ -20,6 +20,10 @@ __attribute__((interrupt)) void DoubleFault_Handler(struct interrupt_frame* fram
 __attribute__((interrupt)) void GPFault_Handler(struct interrupt_frame* frame);
 __attribute__((interrupt)) void KBD_Handler(struct interrupt_frame* frame);
 __attribute__((interrupt)) void Breakpoint_Handler(struct interrupt_frame* frame);
+__attribute__((interrupt)) void Undefined_Handler(struct interrupt_frame* frame);
 void RemapPIC();
 void PIC_EndMaster();
 void PIC_EndSlave();
+
+void PIC_SetMask(uint8_t Irq);
+void PIC_ClearMask(uint8_t Irq);

@@ -53,6 +53,10 @@ void KeInterruptRegisterEntry(unsigned int entry, uint64_t handler, _Idtr idtr) 
 void KePrepareInterrupts() {
     Idtr.Limit = 0x0FFF;
     Idtr.Offset = (uint64_t)GlobalAllocator.RequestPage();
+    // initalize every entry with the undefined handler (we can make changes later before loading the IDT)
+    for (int i = 0; i < 256; i++) {
+        KeInterruptRegisterEntry(i, (uint64_t)Undefined_Handler, Idtr);
+    }
     KeInterruptRegisterEntry(0xE, (uint64_t)PageFault_Handler, Idtr);
     KeInterruptRegisterEntry(0xD, (uint64_t)GPFault_Handler, Idtr);
     KeInterruptRegisterEntry(0x8, (uint64_t)DoubleFault_Handler, Idtr);
@@ -67,7 +71,7 @@ void KePrepareInterrupts() {
     #ifdef _INIT_DEBUG
     printf("KePrepareInterrupts: Remapped 8086 PIC!\n");
     #endif
-
+    PIC_ClearMask(1); // clear the keyboard irq mask
     _sti();
 }
 void KeKernelInitalize(BootParams LoaderParams) {
@@ -115,6 +119,7 @@ void KeStartup(BootParams LoaderParams) {
     KeKernelInitalize(LoaderParams);
     printf("Hello world!\n");
     printf("Boot params magic: 0x%X\n", LoaderParams.Magic);    
+    //asm ("int $0x25"); // try an interrupt that doesnt have a proper handler
 }
 extern "C" void _start(BootParams BootParameters) {
     if (BootParameters.Magic != BOOTPARAM_MAGIC) {

@@ -31,6 +31,11 @@ __attribute__((interrupt)) void Breakpoint_Handler(struct interrupt_frame* frame
     printf("resuming code execution...\n");
 }
 
+// undefined
+__attribute__((interrupt)) void Undefined_Handler(struct interrupt_frame* frame) {
+    printf("Unhandled interrupt with no handler!\n");
+    printf("resuming code execution...\n");
+}
 
 void PIC_EndMaster() {
     _outb(PIC1_COMMAND, PIC_EOI);
@@ -40,6 +45,31 @@ void PIC_EndSlave() {
     PIC_EndMaster();
 }
 
+void PIC_SetMask(uint8_t Irq) {
+    unsigned short port;
+    uint8_t val;
+    if (Irq < 8) {
+        port = PIC1_DATA;
+    } else {
+        port = PIC2_DATA;
+        Irq -= 8;
+    }
+    val = _inb(port) | (1 << Irq);
+    _outb(port, val);
+}
+
+void PIC_ClearMask(uint8_t Irq) {
+    unsigned short port;
+    uint8_t val;
+    if (Irq < 8) {
+        port = PIC1_DATA;
+    } else {
+        port = PIC2_DATA;
+        Irq -= 8;
+    }
+    val = _inb(port) | ~(1 << Irq);
+    _outb(port, val);       
+}
 void RemapPIC() {
     uint8_t a1, a2;
 
