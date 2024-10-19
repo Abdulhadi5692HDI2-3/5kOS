@@ -56,7 +56,16 @@ void KePrepareInterrupts() {
     KeInterruptRegisterEntry(0xE, (uint64_t)PageFault_Handler, Idtr);
     KeInterruptRegisterEntry(0xD, (uint64_t)GPFault_Handler, Idtr);
     KeInterruptRegisterEntry(0x8, (uint64_t)DoubleFault_Handler, Idtr);
+    KeInterruptRegisterEntry(0x03, (uint64_t)Breakpoint_Handler, Idtr);
+    KeInterruptRegisterEntry(33, (uint64_t)KBD_Handler, Idtr);
     _lidt(&Idtr);
+    RemapPIC();
+    #ifdef _INIT_DEBUG
+    printf("KePrepareInterrupts: Remapped 8086 PIC!\n");
+    #endif
+
+    _outb(0x21,0xfd);
+    _outb(0xa1,0xff);
     _sti();
 }
 void KeKernelInitalize(BootParams LoaderParams) {
@@ -104,6 +113,8 @@ void KeStartup(BootParams LoaderParams) {
     KeKernelInitalize(LoaderParams);
     printf("Hello world!\n");
     printf("Boot params magic: 0x%X\n", LoaderParams.Magic);    
+    asm ("int3");
+    printf("Hello again!\n");
 }
 extern "C" void _start(BootParams BootParameters) {
     if (BootParameters.Magic != BOOTPARAM_MAGIC) {
@@ -111,5 +122,5 @@ extern "C" void _start(BootParams BootParameters) {
     }
     KeStartup(BootParameters);
     // if we ever get here then just halt
-    __hcf();
+    for (;;) {__hcf();}
 }

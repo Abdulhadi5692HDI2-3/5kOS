@@ -2,6 +2,7 @@
 [bits 64]
 global _inb
 global _outb
+global _iowait
 
 _outb:
     push rbp

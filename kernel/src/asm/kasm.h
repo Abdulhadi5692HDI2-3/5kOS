@@ -16,3 +16,6 @@ extern "C" int _argstest(int);
 extern "C" void _lidt(_Idtr*);
 extern "C" void _sti();
 extern "C" void _cli();
+extern "C" inline void _iowait() {
+    _outb(0, 0x80);
+}
