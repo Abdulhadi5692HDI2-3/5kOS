@@ -6,7 +6,7 @@
 #include "../../external/printf/printf.h"
 #include "debug.h"
 #include "memory/PFAllocator.h"
-
+#include "memory/GeneralMemory.h"
 #define RGB(r, g, b) ((r & 0xff) << 16) + ((g & 0xff) << 8) + (b & 0xff)
 
 using namespace NSP_EarlyDisplay;
@@ -61,7 +61,12 @@ void KeKernelInitalize(BootParams LoaderParams) {
     #ifdef _INIT_DEBUG
     printf("KeKernelInitalize: Paging enabled!\n");
     #endif
-    
+    // clear screen
+    #ifdef _INIT_DEBUG
+    printf("KeKernelInitalize: Internal kernel init finished! Clearing framebuffer now....\n");
+    #endif
+    MemSet(LoaderParams.bootframebuffer->Address, 0, LoaderParams.bootframebuffer->BufferSize);
+    DisplayInterface.g_curpos = {0, 0};
 }
 void KeStartup(BootParams LoaderParams) {
     KeKernelInitalize(LoaderParams);

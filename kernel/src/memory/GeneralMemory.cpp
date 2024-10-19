@@ -15,9 +15,20 @@ uint64_t GetMemorySize(EFI_MEMORY_DESCRIPTOR* Map, uint64_t MapEntries, uint64_t
 }
 
 
-void * MemSetZero(void * s, uint64_t n) {
-    unsigned char* ptr = (unsigned char* )s;
-    for (int i = 0; i < n; i++) {
-        *ptr++ = 0;
+void* MemSet(void* dest, int val, __SIZE_TYPE__ n) {
+    unsigned char *ptr = (unsigned char*)dest;
+
+    while (n--) {
+        *ptr++ = val;
     }
+    return dest;
 }
+
+void* MemCpy(void* dest, const void* src, __SIZE_TYPE__ n) {
+    const unsigned char* q = (unsigned char*)src;
+    unsigned char* ptr = (unsigned char*)dest;
+    while (n--) {
+        *ptr++ = *q++;
+    }
+    return dest;
+}  
