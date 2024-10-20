@@ -18,4 +18,7 @@ namespace PCI {
         uint8_t BIST;
     } PCIDeviceHeader;
     void EnumeratePCI(ACPI::MCFGHeader*);
+    extern const char* DeviceClasses[];
+    const char* GetVendorName(uint16_t VendorId);
+    const char* GetDeviceName(uint16_t VendorId, uint16_t DeviceId);
 }

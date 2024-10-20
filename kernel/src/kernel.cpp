@@ -133,7 +133,6 @@ void KeStartup(BootParams LoaderParams) {
     printf("RSDP Address: 0x%X\n", LoaderParams.RDSP);
     printf("RSDP revision: %d (0 for ACPI 1, 2 for ACPI 2 and above)\n", LoaderParams.RDSP->Revision);
     AcpiInitalize(LoaderParams);
-    printf("\n after!");
 }
 extern "C" void _start(BootParams BootParameters) {
     if (BootParameters.Magic != BOOTPARAM_MAGIC) {

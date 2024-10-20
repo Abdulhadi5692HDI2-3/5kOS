@@ -12,8 +12,9 @@ namespace PCI {
         PCIDeviceHeader* PciDeviceHeader = (PCIDeviceHeader*)functionAddr;
         if (PciDeviceHeader->DeviceID == 0) return;
         if (PciDeviceHeader->DeviceID == 0xFFFF) return;
-        printf("VendorID: 0x%lx\n", PciDeviceHeader->VendorID);
-        printf("DeviceID: 0x%lx\n", PciDeviceHeader->DeviceID); 
+        printf("Vendor: %s / ", GetVendorName(PciDeviceHeader->VendorID));
+        printf("Device Name: %s / ", GetDeviceName(PciDeviceHeader->VendorID, PciDeviceHeader->DeviceID)); 
+        printf("Class: %s\n", DeviceClasses[PciDeviceHeader->Class]);
     }
     void EnumerateDevice(uint64_t busAddr, uint64_t dev) {
         //printf("was in enumeratedevice\n");

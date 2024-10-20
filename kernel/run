@@ -5,4 +5,4 @@ set _OVMFDIR=../OVMFbin
 set _QEMU=../../qemu/build/qemu-system-x86_64
 # debug
 ##$_QEMU -no-reboot -no-shutdown -d int,cpu_reset -drive file=./bin/CustomOS.img -m 512M -cpu qemu64 -drive if=pflash,format=raw,unit=0,file="../OVMFbin/OVMF_CODE-pure-efi.fd",readonly=on -drive if=pflash,format=raw,unit=1,file="../OVMFbin/OVMF_VARS-pure-efi.fd" -net none
-qemu-system-x86_64 -serial stdio -drive file=./bin/CustomOS.img -m 512M -cpu qemu64 -drive if=pflash,format=raw,unit=0,file="../OVMFbin/OVMF_CODE-pure-efi.fd",readonly=on -drive if=pflash,format=raw,unit=1,file="../OVMFbin/OVMF_VARS-pure-efi.fd" -net none -machine q35
+qemu-system-x86_64 -serial stdio -drive file=./bin/CustomOS.img -m 512M -cpu qemu64 -drive if=pflash,format=raw,unit=0,file="../OVMFbin/OVMF_CODE-pure-efi.fd",readonly=on -drive if=pflash,format=raw,unit=1,file="../OVMFbin/OVMF_VARS-pure-efi.fd" -net none -machine q35 #-device qemu-xhci
