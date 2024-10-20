@@ -3,6 +3,13 @@
 #include <elf.h>
 #include "../../SharedDefs.h"
 
+UINTN strcmp(CHAR8* a, CHAR8* b, UINTN length){
+	for (UINTN i = 0; i < length; i++){
+		if (*a != *b) return 0;
+	}
+	return 1;
+}
+
 EFI_FILE* LoadFile(EFI_FILE* dir, CHAR16* Path, EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *ST);
 #define LDR_OK 0
 #define LDR_FAIL 1
@@ -165,7 +172,19 @@ EFI_STATUS efi_main (EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
 	MemoryMap populatemm = InitalizeMemoryMapStruct(Map, MapSize, DescriptorSize);
 	BootParams parameters = InitalizeParams(new, font, populatemm);
 	parameters.Magic = BOOTPARAM_MAGIC;
-	SystemTable->ConOut->ClearScreen(SystemTable->ConOut);
+	EFI_CONFIGURATION_TABLE* ConfigTable = SystemTable->ConfigurationTable;
+	void* RDSP = NULL;
+	EFI_GUID Acpi2TableGuid = ACPI_20_TABLE_GUID;
+	for (UINTN i = 0; i < SystemTable->NumberOfTableEntries; ++i) {
+		if (CompareGuid(&ConfigTable[i].VendorGuid, &Acpi2TableGuid)) {
+			if (strcmp((CHAR8*)"RSD PTR ", (CHAR8*)ConfigTable->VendorTable, 8)) {
+				RDSP = (void*)ConfigTable->VendorTable;
+			}
+		}
+		ConfigTable++;
+	}
+	parameters.RDSP = (RDSP2*)RDSP;
+	//SystemTable->ConOut->ClearScreen(SystemTable->ConOut);
 	SystemTable->BootServices->ExitBootServices(ImageHandle, MapKey);
 	//EFI_STATUS s = ExecuteKernel(ImageHandle, SystemTable, parameters);
 	//Print(L"Status translated to message from executing kernel: %r. Exiting EFI Program.....\n", s);

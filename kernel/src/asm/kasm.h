@@ -14,6 +14,7 @@ extern "C" void _lpml4(PageTable*);
 extern "C" void _lgdt(GdtDescriptor*);
 extern "C" int _argstest(int);
 extern "C" void _lidt(_Idtr*);
+extern "C" void _sidt(_Idtr*);
 extern "C" void _sti();
 extern "C" void _cli();
 extern "C" inline void _iowait() {

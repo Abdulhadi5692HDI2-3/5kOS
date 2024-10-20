@@ -1,5 +1,6 @@
 #pragma once
 #include "gnu-efi/inc/efi.h"
+#include "kernel/src/acpi/acpi.h"
 // Shared definitions between the kernel and the bootloader
 typedef unsigned long long ulonglong;
 typedef ulonglong ULONGLONG;
@@ -38,9 +39,20 @@ typedef struct u3 {
 #define BOOTPARAM_MAGIC 0xFACADE
 
 // Bootparams struct
+#ifdef __cplusplus
 typedef struct u2 {
 	UINT Magic;
 	Framebuffer* bootframebuffer;
 	PSF1_FONT* bootfont;
 	MemoryMap MemMap;
+	ACPI::RDSP2* RDSP;
 } BootParams; // passed to the kernel
+#else
+typedef struct u2 {
+	UINT Magic;
+	Framebuffer* bootframebuffer;
+	PSF1_FONT* bootfont;
+	MemoryMap MemMap;
+	RDSP2* RDSP;
+} BootParams; // passed to the kernel
+#endif

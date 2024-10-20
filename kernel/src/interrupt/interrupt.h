@@ -14,16 +14,25 @@ typedef unsigned long long int uword_t;
 #define ICW1_ICW4 0x01
 #define ICW4_8086 0x01
 
-struct interrupt_frame;
+struct interrupt_frame {
+    uint8_t ip;
+	uint8_t cs;
+	uint8_t flags;
+	uint8_t sp;
+	uint8_t ss;
+} __attribute__((packed));
+
 __attribute__((interrupt)) void PageFault_Handler(struct interrupt_frame* frame);
 __attribute__((interrupt)) void DoubleFault_Handler(struct interrupt_frame* frame);
 __attribute__((interrupt)) void GPFault_Handler(struct interrupt_frame* frame);
 __attribute__((interrupt)) void KBD_Handler(struct interrupt_frame* frame);
 __attribute__((interrupt)) void Breakpoint_Handler(struct interrupt_frame* frame);
 __attribute__((interrupt)) void Undefined_Handler(struct interrupt_frame* frame);
+__attribute__((interrupt)) void Test_Handler(struct interrupt_frame* frame);
 void RemapPIC();
 void PIC_EndMaster();
 void PIC_EndSlave();
 
 void PIC_SetMask(uint8_t Irq);
 void PIC_ClearMask(uint8_t Irq);
+void PIC_Disable();

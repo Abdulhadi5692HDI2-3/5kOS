@@ -20,8 +20,11 @@ __attribute__((interrupt)) void DoubleFault_Handler(struct interrupt_frame* fram
 }
 // 0x21
 __attribute__((interrupt)) void KBD_Handler(struct interrupt_frame* frame) {
+    printf("key press");
     uint8_t scancode = _inb(0x60);
-    printf("0x%x ", scancode);
+    register int i = _inb(0x61);
+    _outb(0x61, i|0x80);
+    _outb(0x61, i);
     PIC_EndMaster();
 }
 // 0x3
@@ -35,6 +38,12 @@ __attribute__((interrupt)) void Breakpoint_Handler(struct interrupt_frame* frame
 __attribute__((interrupt)) void Undefined_Handler(struct interrupt_frame* frame) {
     printf("Unhandled interrupt with no handler!\n");
     printf("resuming code execution...\n");
+}
+
+// test
+__attribute__((interrupt)) void Test_Handler(struct interrupt_frame* frame) {
+    printf("test test test!\n");
+    PIC_EndMaster();
 }
 
 void PIC_EndMaster() {
@@ -96,4 +105,9 @@ void RemapPIC() {
     _outb(PIC1_DATA, a1);
     _iowait();
     _outb(PIC2_DATA, a2);
+}
+
+void PIC_Disable() {
+    _outb(PIC1_DATA, 0xff);
+    _outb(PIC2_DATA, 0xff);
 }

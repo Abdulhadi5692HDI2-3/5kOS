@@ -10,12 +10,13 @@
 #include "gdt/gdt.h"
 #include "interrupt/idt.h"
 #include "interrupt/interrupt.h"
-
+#include "acpi/acpi.h"
+#include "pci/pci.h"
 
 #define RGB(r, g, b) ((r & 0xff) << 16) + ((g & 0xff) << 8) + (b & 0xff)
 
 using namespace NSP_EarlyDisplay;
-
+using namespace ACPI;
 extern uint64_t _KernelStart;
 extern uint64_t _KernelEnd;
 
@@ -41,16 +42,21 @@ void KePrintMemoryMap(MemoryMap populatemm, NSP_EarlyDisplay::EarlyDisplay Out) 
     }
 }
 
-_Idtr Idtr;
-
+_Idtr Idtr; // the one we're switching to
+_Idtr oldIdtr; // the one from uefi
 void KeInterruptRegisterEntry(unsigned int entry, uint64_t handler, _Idtr idtr) {
     IdtEntry* ientry = (IdtEntry*)(idtr.Offset + entry * sizeof(IdtEntry));
     ientry->SetOffset(handler);
     ientry->type_attr = IDT_TA_InterruptGate;
     ientry->selector = 0x08;
 }
+uint64_t KeInterruptGetEntry(unsigned int entry, _Idtr idtr) {
+    IdtEntry* ientry = (IdtEntry*)(idtr.Offset + entry * sizeof(IdtEntry));
+    return ientry->GetOffset();
+}
 
 void KePrepareInterrupts() {
+    _sidt(&oldIdtr);
     Idtr.Limit = 0x0FFF;
     Idtr.Offset = (uint64_t)GlobalAllocator.RequestPage();
     // initalize every entry with the undefined handler (we can make changes later before loading the IDT)
@@ -61,21 +67,17 @@ void KePrepareInterrupts() {
     KeInterruptRegisterEntry(0xD, (uint64_t)GPFault_Handler, Idtr);
     KeInterruptRegisterEntry(0x8, (uint64_t)DoubleFault_Handler, Idtr);
     KeInterruptRegisterEntry(0x03, (uint64_t)Breakpoint_Handler, Idtr);
-    //KeInterruptRegisterEntry(33, (uint64_t)KBD_Handler, Idtr);
-    IdtEntry* int_kbd = (IdtEntry*)(Idtr.Offset + 0x21 * sizeof(IdtEntry));
-    int_kbd->SetOffset((uint64_t)KBD_Handler);
-    int_kbd->type_attr = IDT_TA_InterruptGate;
-    int_kbd->selector = 0x08;
-    _lidt(&Idtr);
+    KeInterruptRegisterEntry(0x21, (uint64_t)KBD_Handler, Idtr);
+    //KeInterruptRegisterEntry(0xf8, (uint64_t)Test_Handler, Idtr);
+    //KeInterruptRegisterEntry(0x68, (uint64_t)Test_Handler, Idtr);
     RemapPIC();
-    #ifdef _INIT_DEBUG
-    printf("KePrepareInterrupts: Remapped 8086 PIC!\n");
-    #endif
-    PIC_ClearMask(1); // clear the keyboard irq mask
+    _lidt(&Idtr);
+    PIC_Disable(); // disable the PIC
     _sti();
 }
+
 void KeKernelInitalize(BootParams LoaderParams) {
-    asm ("cli"); // at this stage we dont need interrupts
+    //asm ("cli"); // at this stage we dont need interrupts
     SerialDevice COM1;
     COM1.Initalize();
     DefaultSerialDevice = COM1;
@@ -115,11 +117,23 @@ void KeKernelInitalize(BootParams LoaderParams) {
     MemSet(LoaderParams.bootframebuffer->Address, 0, LoaderParams.bootframebuffer->BufferSize);
     DisplayInterface.g_curpos = {0, 0};
 }
+
+void AcpiInitalize(BootParams LoaderParams) {
+    ACPI::XSDTHeader* XSDT = (ACPI::XSDTHeader*)(LoaderParams.RDSP->XsdtAddress);
+    printf("XSDT addr: 0x%lx\n", XSDT);
+    ACPI::MCFGHeader* MCFG = (ACPI::MCFGHeader*)ACPI::FindTable(XSDT, (char*)"MCFG");
+    printf("MCFG addr: 0x%lx\n", MCFG);
+    PCI::EnumeratePCI(MCFG);
+}
+
 void KeStartup(BootParams LoaderParams) {
     KeKernelInitalize(LoaderParams);
     printf("Hello world!\n");
     printf("Boot params magic: 0x%X\n", LoaderParams.Magic);    
-    //asm ("int $0x25"); // try an interrupt that doesnt have a proper handler
+    printf("RSDP Address: 0x%X\n", LoaderParams.RDSP);
+    printf("RSDP revision: %d (0 for ACPI 1, 2 for ACPI 2 and above)\n", LoaderParams.RDSP->Revision);
+    AcpiInitalize(LoaderParams);
+    printf("\n after!");
 }
 extern "C" void _start(BootParams BootParameters) {
     if (BootParameters.Magic != BOOTPARAM_MAGIC) {
